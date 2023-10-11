@@ -22,6 +22,7 @@ contract Fractional is FractionalStorage, ERC721URIStorage {
 
         _mint(receiver, newTokenId);
         _setTokenURI(newTokenId, _tokenURI);
+
         track[receiver] = newTokenId;
         tokenIds.increment();
 
@@ -78,7 +79,10 @@ contract Fractional is FractionalStorage, ERC721URIStorage {
         uint256 _tokenId,
         uint256 _totalShares
     ) public payable {
-        require(msg.value >= idToShareValue[_tokenId].mul(_totalShares));
+        require(
+            msg.value >= idToShareValue[_tokenId].mul(_totalShares),
+            "Invalid amount"
+        );
 
         address payable nftOwner = idToOwner[_tokenId];
         uint256 _amount = idToShareValue[_tokenId].mul(_totalShares);
@@ -87,15 +91,26 @@ contract Fractional is FractionalStorage, ERC721URIStorage {
         idToShare[_tokenId].transfer(msg.sender, _totalShares);
     }
 
+    function getCurrentTokenId() public view returns (uint256) {
+        return tokenIds.current();
+    }
+
     function fetchNFTs() public view returns (NFT[] memory) {
         uint256 totalItemCount = tokenIds.current();
         uint256 itemCount = 0;
         uint256 currentIndex = 0;
 
+        for (uint256 i = 0; i <= totalItemCount; i++) {
+            if (idToNFT[i].owner == msg.sender) {
+                itemCount += 1;
+            }
+        }
+
         NFT[] memory items = new NFT[](itemCount);
-        for (uint256 i = 0; i < totalItemCount; i++) {
-            if (idToNFT[i + 1].owner == msg.sender) {
-                items[currentIndex] = idToNFT[i + 1];
+
+        for (uint256 i = 0; i <= totalItemCount; i++) {
+            if (idToNFT[i].owner == msg.sender) {
+                items[currentIndex] = idToNFT[i];
                 currentIndex += 1;
             }
         }
